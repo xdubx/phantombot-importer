@@ -148,6 +148,11 @@ func (b *bot) set(table, key, value string) error {
 	return err
 }
 
+func (b *bot) del(table, key string) error {
+	_, err := b.call("dbdelkey", map[string]any{"delkey": map[string]string{"table": table, "key": key}})
+	return err
+}
+
 func (b *bot) incr(table, key string, value int) error {
 	_, err := b.call("dbincr", map[string]any{"incr": map[string]string{"table": table, "key": key, "value": strconv.Itoa(value)}})
 	return err

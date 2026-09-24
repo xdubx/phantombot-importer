@@ -108,12 +108,78 @@ func run() error {
 	defer b.conn.CloseNow()
 	fmt.Println("Logged in.")
 
-	fmt.Println("\nPoints and watch time are ADDED to what PhantomBot already has; quotes and timers are appended.")
-	fmt.Println("Running the import twice imports everything twice.")
+	if !strings.HasPrefix(strings.ToLower(ask("\nBack up all PhantomBot data to CSV files first? [Y/n]", "")), "n") {
+		if _, err := backupAll(b); err != nil {
+			return err
+		}
+	}
+
+	wipe := wipeTables(e)
+	if len(wipe) > 0 {
+		fmt.Printf("\nWipe can delete the existing PhantomBot data that this import replaces: %s\n", strings.Join(wipe, ", "))
+		fmt.Println("Other data is not touched. This cannot be undone, so back up PhantomBot's config folder first.")
+		if !yes("Wipe it before importing?") {
+			wipe = nil
+		} else if ask(`Type WIPE to confirm`, "") != "WIPE" {
+			return fmt.Errorf("wipe not confirmed, nothing was changed")
+		}
+	}
+
+	if wipe == nil {
+		fmt.Println("\nPoints and watch time are ADDED to what PhantomBot already has; quotes and timers are appended.")
+		fmt.Println("Running the import twice imports everything twice.")
+	}
 	if !yes("Import now?") {
 		return nil
 	}
+	if err := wipeAll(b, wipe); err != nil {
+		return err
+	}
 	return importAll(b, e)
+}
+
+// wipeTables lists the PhantomBot tables this import writes to (only kinds present in the export).
+func wipeTables(e *export) []string {
+	var t []string
+	for _, c := range []struct {
+		table string
+		n     int
+	}{{"points", len(e.points)}, {"time", len(e.time)}, {"quotes", len(e.quotes)}, {"ranksMapping", len(e.ranks)}, {"command", len(e.commands)}, {"notices", len(e.timers)}} {
+		if c.n > 0 {
+			t = append(t, c.table)
+		}
+	}
+	return t
+}
+
+// wipeAll deletes every key of the given tables. For custom commands it also removes their
+// permission, price and disabled entries, but leaves those of built-in commands alone.
+func wipeAll(b *bot, tables []string) error {
+	for _, table := range tables {
+		keys, err := b.keys(table)
+		if err != nil {
+			return err
+		}
+		i := 0
+		for k := range keys {
+			i++
+			if err := b.del(table, k); err != nil {
+				return err
+			}
+			if table == "command" {
+				for _, t := range []string{"permcom", "pricecom", "disabledCommands"} {
+					if err := b.del(t, k); err != nil {
+						return err
+					}
+				}
+			}
+			if i == len(keys) || i%100 == 0 {
+				fmt.Printf("\rwipe %-12s %d/%d", table, i, len(keys))
+			}
+		}
+		fmt.Printf("\rwipe %-12s %d deleted\n", table, len(keys))
+	}
+	return nil
 }
 
 func importAll(b *bot, e *export) error {

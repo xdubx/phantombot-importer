@@ -11,7 +11,7 @@ import (
 
 func TestExport(t *testing.T) {
 	e := newExport()
-	// split currency files: the same user appearing twice is summed
+	// the same user in two files (currency + points file) is imported once, not summed
 	e.add("currency1.xlsx", [][]string{{"Name", "Rank", "Points", "Hours"}, {"Alice", "Newbie", "100", "1.5"}, {"@Bob", "", "7", "0,25"}})
 	e.add("currency2.xlsx", [][]string{{"Name", "Rank", "Points", "Hours"}, {"alice", "", "50", "0.5"}})
 	e.add("quotes.xlsx", [][]string{{"ID", "Quote", "Game"}, {"1", `he said "hi"`, "Chess"}})
@@ -24,10 +24,10 @@ func TestExport(t *testing.T) {
 	e.add("timers.xlsx", [][]string{{"Name", "Response", "Interval", "Lines"}, {"discord", "join $channel", "15", "20"}})
 	e.add("junk.xlsx", [][]string{{"foo", "bar"}, {"1", "2"}})
 
-	if want := map[string]int{"alice": 150, "bob": 7}; !reflect.DeepEqual(e.points, want) {
+	if want := map[string]int{"alice": 100, "bob": 7}; !reflect.DeepEqual(e.points, want) {
 		t.Errorf("points = %v, want %v", e.points, want)
 	}
-	if want := map[string]int{"alice": 7200, "bob": 900}; !reflect.DeepEqual(e.time, want) {
+	if want := map[string]int{"alice": 5400, "bob": 900}; !reflect.DeepEqual(e.time, want) {
 		t.Errorf("time = %v, want %v", e.time, want)
 	}
 	if q := e.quotes; len(q) != 1 || q[0][1] != "he said ''hi''" || q[0][3] != "Chess" || q[0][2] == "" {

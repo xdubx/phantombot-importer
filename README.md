@@ -23,11 +23,13 @@ Imports:
 1. Download `phantombot-importer.exe` (Windows) or `phantombot-importer-linux` from the [Releases](../../releases).
 2. Drag the export folder (or files) onto the exe, or start it and paste the path.
 3. Enter the bot URL (default `https://localhost:25000`) and your **panel** login.
-4. Check the summary and confirm.
-5. **Restart PhantomBot** so it loads the imported commands and timers.
+4. "Back up all PhantomBot data to CSV files first?" (default **yes**) saves every PhantomBot table that has data as `<table>.csv` (key,value) in a `phantombot-backup-<date>` folder next to the exe. Tables added by custom or third-party scripts aren't included, and neither is the panel login data. The CSVs are for looking up or re-entering data; the importer can't restore them. For a full restore, copy PhantomBot's `config` folder.
+5. Optional: answer **yes** to "Wipe it before importing?" and type `WIPE`. This first deletes the existing PhantomBot data in only the tables this import fills (points, time, quotes, ranks, custom commands, timers), so a re-import starts clean instead of adding on top. Everything else is left alone. It cannot be undone, so back up first.
+6. Check the summary and confirm.
+7. **Restart PhantomBot** so it loads the imported commands and timers.
 
 Notes:
-- Running the import twice imports everything twice (points added again, quotes and timers duplicated).
+- Without wipe, running the import twice imports everything twice (points added again, quotes and timers duplicated).
 - Streamlabs variables are translated (`$user`→`(sender)`, `$target`→`(touser)`, `$count`→`(count)`, `$readapi(...)`→`(customapi ...)`, …). Any it can't translate are listed so you can fix them by hand.
 - Streamlabs permissions like Min_Points or User_Specific don't exist in PhantomBot. Those commands become Viewer commands, with a warning.
 - Rank requirements are imported as hours. If your Streamlabs ranks were points-based, adjust them in the panel afterwards.

@@ -202,14 +202,15 @@ func (e *export) addRow(k string, r row) error {
 			if err != nil {
 				return err
 			}
-			e.points[user] += int(math.Round(p))
+			// the export repeats users across files (e.g. a Points file next to the currency files): keep one value, never sum
+			e.points[user] = max(e.points[user], int(math.Round(p)))
 		}
 		if s := r.get(colHours...); s != "" {
 			h, err := num(s)
 			if err != nil {
 				return err
 			}
-			e.time[user] += int(math.Round(h * 3600))
+			e.time[user] = max(e.time[user], int(math.Round(h*3600)))
 		}
 	case "quotes":
 		q := r.get(colQuote...)
